@@ -25,32 +25,33 @@ library("lpdensity")
 #----------------------------------------
 
 set.seed(42)
-data <- as.data.frame(rnorm(4000, mean = -1))
-data <- data[data < 0, 1, drop=FALSE]
-data <- -1 * data[1:2000, 1, drop=FALSE]
-colnames(data) <- c("v1")
+data <- rnorm(4000, mean = -1)
+data <- data[data < 0]
+data <- -1 * data[1:2000]
 
 #----------------------------------------
 # Figure 1, panel (a)
 #----------------------------------------
 
-data$pdf <- dnorm(data$v1, mean = 1, sd = 1) / pnorm(0, mean = 1, sd = 1, lower.tail = FALSE)
-ggplot() + geom_histogram(data=data, aes(x=v1, y=..density..), breaks=seq(0, 4, 0.2), fill=2, col="white", alpha=0.6) +
+dataHist <- as.data.frame(data)
+colnames(dataHist) <- c("v1")
+dataHist$pdf <- dnorm(dataHist$v1, mean = 1, sd = 1) / pnorm(0, mean = 1, sd = 1, lower.tail = FALSE)
+ggplot() + geom_histogram(data=dataHist, aes(x=v1, y=..density..), breaks=seq(0, 4, 0.2), fill=2, col="white", alpha=0.6) +
   theme_bw() + labs(x = "", y = "Density") +
-  geom_line(data=data, aes(x=v1, y=pdf))
+  geom_line(data=dataHist, aes(x=v1, y=pdf))
 
 #----------------------------------------
 # Figure 1, panel (b)
 #----------------------------------------
 
-model2 <- lpdensity(data$v1, bw = 0.5, grid = seq(0, 4, 0.05))
+model2 <- lpdensity(data, bw = 0.5, grid = seq(0, 4, 0.05))
 plot(model2) + theme(legend.position = "none")
 
 #----------------------------------------
 # lpdensity(): Estimation with bandwidth 0.5 on provided grid points
 #----------------------------------------
 
-model1 <- lpdensity(data$v1, bw = 0.5, grid = seq(0, 4, 0.5))
+model1 <- lpdensity(data, bw = 0.5, grid = seq(0, 4, 0.5))
 summary(model1)
 
 #----------------------------------------
@@ -64,7 +65,7 @@ model1$Estimate
 # lpdensity(): conventional inference
 #----------------------------------------
 
-summary(lpdensity(data$v1, bw = 0.5, p = 2, q = 2))
+summary(lpdensity(data, bw = 0.5, p = 2, q = 2))
 
 #----------------------------------------
 # lpdensity(): customizing screen output
@@ -78,8 +79,8 @@ summary(model1, alpha = 0.01, sep = 3, grid = c(0, 0.5, 1, 2), CIuniform = TRUE)
 #   estimation using partial sample
 #----------------------------------------
 
-lpdensity(data$v1[data$v1 < 1.5], bw = 0.5, grid = 1.5)$Estimate[, "f_p"]
-lpdensity(data$v1[data$v1 > 1.5], bw = 0.5, grid = 1.5)$Estimate[, "f_p"]
+lpdensity(data[data < 1.5], bw = 0.5, grid = 1.5)$Estimate[, "f_p"]
+lpdensity(data[data > 1.5], bw = 0.5, grid = 1.5)$Estimate[, "f_p"]
 dnorm(1.5, mean = 1, sd = 1) / pnorm(0, mean = 1, sd = 1, lower.tail = FALSE) # true density at 1.5
 
 #----------------------------------------
@@ -88,10 +89,10 @@ dnorm(1.5, mean = 1, sd = 1) / pnorm(0, mean = 1, sd = 1, lower.tail = FALSE) # 
 #   option "scale"
 #----------------------------------------
 
-lpdensity(data$v1[data$v1 < 1.5], bw = 0.5, grid = 1.5,
-          scale = sum(data$v1 < 1.5)/2000)$Estimate[, "f_p"]
-lpdensity(data$v1[data$v1 > 1.5], bw = 0.5, grid = 1.5,
-          scale = sum(data$v1 > 1.5)/2000)$Estimate[, "f_p"]
+lpdensity(data[data < 1.5], bw = 0.5, grid = 1.5,
+          scale = sum(data < 1.5)/2000)$Estimate[, "f_p"]
+lpdensity(data[data > 1.5], bw = 0.5, grid = 1.5,
+          scale = sum(data > 1.5)/2000)$Estimate[, "f_p"]
 
 #----------------------------------------
 # plot(): customization
@@ -100,7 +101,7 @@ lpdensity(data$v1[data$v1 > 1.5], bw = 0.5, grid = 1.5,
 plot(model2, CItype="line") + theme(legend.position = "none")
 plot(model2, type="points", CItype="ebar", grid = seq(0, 4, 0.5)) +
   theme(legend.position = "none")
-plot(model2, hist = TRUE, histData = data$v1, histBreaks = seq(0, 4, 0.2)) +
+plot(model2, hist = TRUE, histData = data, histBreaks = seq(0, 4, 0.2)) +
   theme(legend.position = "none")
 set.seed(123) # fix the random seed for critical value simulation
 plot(model2, alpha=0.1, CIuniform = TRUE) +
@@ -110,7 +111,7 @@ plot(model2, alpha=0.1, CIuniform = TRUE) +
 # lpbwdensity(): illustration
 #----------------------------------------
 
-model1bw <- lpbwdensity(data$v1, grid = seq(0, 4, 0.5))
+model1bw <- lpbwdensity(data, grid = seq(0, 4, 0.5))
 summary(model1bw)
 
 #----------------------------------------
@@ -118,7 +119,7 @@ summary(model1bw)
 #   selection
 #----------------------------------------
 
-model5 <- lpdensity(data$v1, grid = seq(0, 4, 0.5), bwselect = "imse-dpi")
+model5 <- lpdensity(data, grid = seq(0, 4, 0.5), bwselect = "imse-dpi")
 summary(model5)
 
 #----------------------------------------
@@ -126,14 +127,14 @@ summary(model5)
 #----------------------------------------
 
 # Estimation and plot using IMSE bandwidth
-model6bwIMSE <- lpbwdensity(data$v1, grid = seq(0, 4, 0.05),
+model6bwIMSE <- lpbwdensity(data, grid = seq(0, 4, 0.05),
                             bwselect = "imse-dpi")
-model6 <- lpdensity(data$v1, grid = seq(0, 4, 0.05),
+model6 <- lpdensity(data, grid = seq(0, 4, 0.05),
                     bw = model6bwIMSE$BW[, "bw"])
 plot(model6) + theme(legend.position = "none")
 
 # Estimation and plot using half IMSE bandwidth
-model7 <- lpdensity(data$v1, grid = seq(0, 4, 0.05),
+model7 <- lpdensity(data, grid = seq(0, 4, 0.05),
                     bw = model6bwIMSE$BW[, "bw"] / 2)
 plot(model7) + theme(legend.position = "none")
 
