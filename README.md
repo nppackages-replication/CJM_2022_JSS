@@ -8,9 +8,9 @@ https://nppackages.github.io/replication
 
 ## Simulated Illustration
 
-- R implementation: [main](CJM_2021_JSS.R)
+- R implementation: [main](CJM_2022_JSS.R)
 
-- Stata implementation: [main](CJM_2021_JSS.do)
+- Stata implementation: [main](CJM_2022_JSS.do)
 
 ## Reference
 
